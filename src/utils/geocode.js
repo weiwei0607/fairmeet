@@ -25,13 +25,14 @@ async function nominatimSearch(query) {
 }
 
 function formatShortLabel(item) {
-  const a = item.address;
+  const a = item.address || {};
   const parts = [
-    a.amenity || a.building || a.road,
+    item.name || a.amenity || a.building || a.road,
     a.suburb || a.neighbourhood || a.city_district,
     a.city || a.town || a.county,
-    a.country_code?.toUpperCase(),
   ].filter(Boolean);
+  // 不附國碼（會在欄位皆空時掉成「TW」）；皆空時用完整地址第一段保底
+  if (parts.length === 0) return (item.display_name || '').split(',')[0].trim();
   return parts.slice(0, 3).join('・');
 }
 

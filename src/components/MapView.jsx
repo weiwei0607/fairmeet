@@ -32,7 +32,9 @@ export default function MapView({ candidates, rankedResults, center }) {
   const topCandidate = rankedResults[0]?.candidate;
 
   return (
-    <div style={{ height: 320, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)' }}>
+    <div className="fairmeet-map" style={{ height: 320, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)' }}>
+      {/* 暖褐濾鏡：讓冷色 OSM 圖磚融進整體暖色系（不影響標記/圈層） */}
+      <style>{`.fairmeet-map .leaflet-tile-pane { filter: sepia(0.35) saturate(0.85) brightness(1.03) hue-rotate(-8deg); }`}</style>
       <MapContainer
         center={[center.lat, center.lng]}
         zoom={12}
