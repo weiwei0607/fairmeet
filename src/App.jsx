@@ -12,10 +12,35 @@ import { applyDebtCompensation, createGroup, loadGroups, recordMeetup, getDebtSu
 import { DEFAULT_CENTER } from './config';
 
 const TRANSPORT_MODES = [
-  { value: 'transit', label: '大眾運輸', icon: '🚇' },
-  { value: 'driving', label: '開車',     icon: '🚗' },
-  { value: 'walking', label: '步行',     icon: '🚶' },
+  { value: 'transit', label: '大眾運輸', icon: 'transit' },
+  { value: 'driving', label: '開車',     icon: 'car' },
+  { value: 'walking', label: '步行',     icon: 'walk' },
 ];
+
+// ── 線性 SVG 圖示（取代 emoji，統一 currentColor）──
+const ICON_PATHS = {
+  pin:     'M12 21s7-5.686 7-11a7 7 0 1 0-14 0c0 5.314 7 11 7 11Z M12 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z',
+  transit: 'M8 4h8a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z M5 11h14 M9 20l-2 1 M15 20l2 1 M8.5 14.5h.01 M15.5 14.5h.01',
+  car:     'M5 11l1.5-4A2 2 0 0 1 8.4 5.7h7.2a2 2 0 0 1 1.9 1.3L19 11 M4 11h16v5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5Z M7 14h.01 M17 14h.01',
+  walk:    'M13 5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z M13 8l-3 2 1 4 M11 14l-2 6 M14 12l3 1 M11 10l4 1.5 1 3.5',
+  users:   'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M3 20a6 6 0 0 1 12 0 M16 5.5a3 3 0 0 1 0 5.8 M21 20a6 6 0 0 0-4-5.6',
+  lock:    'M7 11V8a5 5 0 0 1 10 0v3 M6 11h12a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z',
+  map:     'M9 4 4 6v14l5-2 6 2 5-2V4l-5 2-6-2Z M9 4v14 M15 6v14',
+  check:   'M5 12l5 5 9-10',
+  target:  'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M12 12h.01',
+  spark:   'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z',
+  plus:    'M12 5v14 M5 12h14',
+};
+function Icon({ name, size = 18, stroke = 1.6, style }) {
+  const d = ICON_PATHS[name];
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"
+      style={{ display: 'block', flexShrink: 0, ...style }} aria-hidden="true">
+      {d.split(' M').map((seg, i) => <path key={i} d={(i === 0 ? seg : 'M' + seg)} />)}
+    </svg>
+  );
+}
 
 const useIsMobile = () => {
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
@@ -55,7 +80,7 @@ export default function App() {
     setResults(null);
   }
   function removePerson(idx) { setPersons(prev => prev.filter((_, i) => i !== idx)); setResults(null); }
-  function addCandidate(item) { setCandidates(prev => [...prev, { name: item.shortLabel, lat: item.lat, lng: item.lng }]); setResults(null); }
+  function addCandidate(item) { setCandidates(prev => [...prev, { name: item.shortLabel, district: item.district, lat: item.lat, lng: item.lng }]); setResults(null); }
   function removeCandidate(idx) { setCandidates(prev => prev.filter((_, i) => i !== idx)); setResults(null); }
 
   function handleCreateGroup() {
@@ -113,17 +138,17 @@ export default function App() {
         borderBottom: '1px solid var(--border)',
         padding: isMobile ? '12px 16px' : '14px 28px',
         display: 'flex', alignItems: 'center', gap: 16,
-        background: 'rgba(13,21,32,0.95)',
+        background: 'rgba(252,246,238,0.9)',
         backdropFilter: 'blur(12px)',
         position: 'sticky', top: 0, zIndex: 50,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 32, height: 32, borderRadius: 8,
-            background: 'linear-gradient(135deg, #3ef0a0 0%, #1ad97a 100%)',
+            background: 'linear-gradient(135deg, #ef6b43 0%, #d9531f 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, flexShrink: 0,
-          }}>📍</div>
+            color: '#fff', flexShrink: 0,
+          }}><Icon name="pin" size={18} stroke={2} /></div>
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: isMobile ? 14 : 16, color: 'var(--text)', lineHeight: 1.1 }}>約哪裡公平</div>
             <div style={{ fontSize: 9, color: 'var(--muted)', letterSpacing: 2, fontFamily: 'var(--font-display)' }}>FAIRMEET</div>
@@ -145,8 +170,9 @@ export default function App() {
           </div>
         )}
 
-        <div style={{ marginLeft: 'auto' }}>
-          <span style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'var(--font-display)' }}>🔒 後端加密</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, color: 'var(--muted)' }}>
+          <Icon name="lock" size={12} stroke={1.6} />
+          <span style={{ fontSize: 10, fontFamily: 'var(--font-display)' }}>後端加密</span>
         </div>
       </header>
 
@@ -170,8 +196,8 @@ export default function App() {
               >
                 <div style={{
                   width: 26, height: 26, borderRadius: '50%',
-                  background: i === mobileStep ? 'var(--accent)' : i < mobileStep ? 'rgba(62,240,160,0.15)' : 'var(--surface2)',
-                  border: `2px solid ${i === mobileStep ? 'var(--accent)' : i < mobileStep ? 'rgba(62,240,160,0.4)' : 'var(--border)'}`,
+                  background: i === mobileStep ? 'var(--accent)' : i < mobileStep ? 'rgba(239,107,67,0.15)' : 'var(--surface2)',
+                  border: `2px solid ${i === mobileStep ? 'var(--accent)' : i < mobileStep ? 'rgba(239,107,67,0.4)' : 'var(--border)'}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-display)',
                   color: i === mobileStep ? '#000' : i < mobileStep ? 'var(--accent)' : 'var(--muted)',
@@ -203,8 +229,8 @@ export default function App() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                     {persons.map((p, i) => <PersonTag key={i} person={p} index={i} onRemove={() => removePerson(i)} />)}
                   </div>
-                  {persons.length === 0 && <EmptyHint icon="👥" text="輸入暱稱和出發地址，加入第一位參與者" />}
-                  {persons.length === 1 && <EmptyHint icon="＋" text="再加入一位才能計算" />}
+                  {persons.length === 0 && <EmptyHint icon="users" text="輸入暱稱和出發地址，加入第一位參與者" />}
+                  {persons.length === 1 && <EmptyHint icon="plus" text="再加入一位才能計算" />}
                 </div>
               )}
 
@@ -219,7 +245,7 @@ export default function App() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
                     {candidates.map((c, i) => <CandidateTag key={i} candidate={c} index={i} onRemove={() => removeCandidate(i)} />)}
                   </div>
-                  {candidates.length === 0 && <EmptyHint icon="📍" text="搜尋並新增候選集合點" />}
+                  {candidates.length === 0 && <EmptyHint icon="pin" text="搜尋並新增候選集合點" />}
                   {groupList.length > 0 && (
                     <div style={{ marginTop: 20 }}>
                       <SectionLabel>套用歷史補償（選填）</SectionLabel>
@@ -248,7 +274,7 @@ export default function App() {
             </div>
 
             {/* Bottom action */}
-            <div style={{ position: 'fixed', bottom: 56, left: 0, right: 0, padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'rgba(7,11,18,0.97)', backdropFilter: 'blur(12px)', zIndex: 99 }}>
+            <div style={{ position: 'fixed', bottom: 56, left: 0, right: 0, padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'rgba(250,244,236,0.97)', backdropFilter: 'blur(12px)', zIndex: 99 }}>
               {mobileStep === 0 && (
                 <button onClick={() => persons.length >= 2 && setMobileStep(1)} disabled={persons.length < 2} style={persons.length >= 2 ? primaryBtn : disabledBtn}>
                   下一步：新增集合點 →
@@ -258,7 +284,7 @@ export default function App() {
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button onClick={() => setMobileStep(0)} style={{ ...outlineBtn, padding: '13px 16px', flexShrink: 0 }}>←</button>
                   <button onClick={calculate} disabled={!canCalculate || loading} style={canCalculate && !loading ? { ...primaryBtn, flex: 1 } : { ...disabledBtn, flex: 1 }}>
-                    {loading ? <><span className="spinner" style={{ width: 14, height: 14, marginRight: 8 }} />計算中…</> : '計算最公平集合點 ✦'}
+                    {loading ? <><span className="spinner" style={{ width: 14, height: 14, marginRight: 8 }} />計算中…</> : '找出最公平的相聚地 ✦'}
                   </button>
                 </div>
               )}
@@ -278,7 +304,7 @@ export default function App() {
               padding: '24px 20px',
               overflowY: 'auto',
               display: 'flex', flexDirection: 'column', gap: 24,
-              background: 'rgba(13,21,32,0.6)',
+              background: 'rgba(249,242,232,0.5)',
             }}>
               <section>
                 <SectionLabel>參與者出發地</SectionLabel>
@@ -286,7 +312,7 @@ export default function App() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                   {persons.map((p, i) => <PersonTag key={i} person={p} index={i} onRemove={() => removePerson(i)} />)}
                 </div>
-                {persons.length < 2 && <EmptyHint icon="👥" text={persons.length === 0 ? '輸入暱稱和地址加入參與者' : '再加一位就可以計算了'} />}
+                {persons.length < 2 && <EmptyHint icon="users" text={persons.length === 0 ? '輸入暱稱和地址加入參與者' : '再加一位就可以計算了'} />}
               </section>
 
               <Divider />
@@ -306,7 +332,7 @@ export default function App() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
                   {candidates.map((c, i) => <CandidateTag key={i} candidate={c} index={i} onRemove={() => removeCandidate(i)} />)}
                 </div>
-                {candidates.length === 0 && <EmptyHint icon="📍" text="搜尋並新增候選集合點" />}
+                {candidates.length === 0 && <EmptyHint icon="pin" text="搜尋並新增候選集合點" />}
               </section>
 
               {groupList.length > 0 && (
@@ -326,7 +352,7 @@ export default function App() {
               )}
 
               <button onClick={calculate} disabled={!canCalculate || loading} style={canCalculate && !loading ? primaryBtn : disabledBtn}>
-                {loading ? <><span className="spinner" style={{ width: 14, height: 14, marginRight: 8 }} />計算中…</> : '計算最公平集合點 ✦'}
+                {loading ? <><span className="spinner" style={{ width: 14, height: 14, marginRight: 8 }} />計算中…</> : '找出最公平的相聚地 ✦'}
               </button>
               {error && <div style={{ fontSize: 12, color: 'var(--warn)', marginTop: -12 }}>{error}</div>}
             </div>
@@ -366,7 +392,7 @@ export default function App() {
             {persons.length < 2 && <div style={{ fontSize: 11, color: 'var(--warn)', marginTop: 8 }}>⚠ 請先在規劃頁加入至少 2 位參與者</div>}
           </div>
           {groupList.length === 0 ? (
-            <EmptyHint icon="👥" text="還沒有群組，先建立一個吧" />
+            <EmptyHint icon="users" text="還沒有群組，先建立一個吧" />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {groupList.map((g, gi) => {
@@ -392,18 +418,18 @@ export default function App() {
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           display: 'flex', borderTop: '1px solid var(--border)',
-          background: 'rgba(7,11,18,0.97)', backdropFilter: 'blur(16px)',
+          background: 'rgba(250,244,236,0.97)', backdropFilter: 'blur(16px)',
           zIndex: 100, paddingBottom: 'env(safe-area-inset-bottom)',
         }}>
-          {[['plan', '規劃', '🗺'], ['groups', '群組', '👥']].map(([t, label, icon]) => (
+          {[['plan', '規劃', 'map'], ['groups', '群組', 'users']].map(([t, label, icon]) => (
             <button key={t} onClick={() => setTab(t)} style={{
-              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
               padding: '10px 0', background: 'none', border: 'none',
               color: tab === t ? 'var(--accent)' : 'var(--muted)',
               fontFamily: 'var(--font-body)', fontSize: 10, fontWeight: tab === t ? 600 : 400,
               transition: 'color 0.15s',
             }}>
-              <span style={{ fontSize: 18 }}>{icon}</span>
+              <Icon name={icon} size={20} stroke={tab === t ? 1.8 : 1.6} />
               {label}
             </button>
           ))}
@@ -439,7 +465,7 @@ function PersonSearch({ onAdd }) {
 }
 
 function PersonTag({ person, index, onRemove }) {
-  const colors = ['#3ef0a0', '#38bdf8', '#f472b6', '#a78bfa', '#fb923c'];
+  const colors = ['#ef6b43', '#e0922a', '#3a9e94', '#8b7bd6', '#c2693f'];
   const color = colors[index % colors.length];
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', transition: 'border-color 0.15s' }}
@@ -467,7 +493,7 @@ function CandidateTag({ candidate, index, onRemove }) {
       onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border2)'}
       onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
     >
-      <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, background: 'rgba(56,189,248,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--accent2)', fontFamily: 'var(--font-display)' }}>
+      <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, background: 'var(--accent2-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--accent2)', fontFamily: 'var(--font-display)' }}>
         {index + 1}
       </div>
       <span style={{ fontSize: 13, flex: 1, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{candidate.name}</span>
@@ -484,14 +510,14 @@ function TransportButton({ m, active, onClick }) {
     <button onClick={onClick} style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
       padding: '10px 8px', borderRadius: 10, cursor: 'pointer',
-      border: `1.5px solid ${active ? 'rgba(62,240,160,0.5)' : 'var(--border)'}`,
-      background: active ? 'rgba(62,240,160,0.08)' : 'var(--surface2)',
+      border: `1.5px solid ${active ? 'rgba(239,107,67,0.5)' : 'var(--border)'}`,
+      background: active ? 'rgba(239,107,67,0.08)' : 'var(--surface2)',
       color: active ? 'var(--accent)' : 'var(--muted)',
       fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: active ? 600 : 400,
       transition: 'all 0.15s ease',
-      boxShadow: active ? '0 0 12px rgba(62,240,160,0.12)' : 'none',
+      boxShadow: active ? '0 0 12px rgba(239,107,67,0.12)' : 'none',
     }}>
-      <span style={{ fontSize: 18 }}>{m.icon}</span>
+      <Icon name={m.icon} size={20} stroke={active ? 1.8 : 1.6} />
       {m.label}
     </button>
   );
@@ -499,10 +525,53 @@ function TransportButton({ m, active, onClick }) {
 
 function PrivacyNotice({ hasDebt }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--muted)', background: 'rgba(62,240,160,0.03)', border: '1px solid rgba(62,240,160,0.1)', borderRadius: 8, padding: '8px 14px', marginTop: 14 }}>
-      🔒 只顯示集合點，不顯示任何人的出發位置
-      {hasDebt && <span style={{ color: 'var(--accent)' }}>· ⚖ 已套用歷史補償</span>}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--muted)', background: 'rgba(239,107,67,0.03)', border: '1px solid rgba(239,107,67,0.1)', borderRadius: 8, padding: '8px 14px', marginTop: 14 }}>
+      <Icon name="lock" size={13} stroke={1.6} style={{ flexShrink: 0 }} />
+      只顯示集合點，不顯示任何人的出發位置
+      {hasDebt && <span style={{ color: 'var(--accent)' }}>· 已套用歷史補償</span>}
     </div>
+  );
+}
+
+function ConvergenceHero() {
+  // 等時圈母題（裝飾、非真實座標）＋ 彩色的人匯聚到「最公平的目的地」
+  // 人的位置是固定裝飾排列，不反映真實出發地 → 不洩漏、無法反推
+  const people = [
+    { x: 60, y: 52, c: '#ef6b43' },
+    { x: 224, y: 46, c: '#e0922a' },
+    { x: 50, y: 128, c: '#3a9e94' },
+    { x: 230, y: 134, c: '#8b7bd6' },
+  ];
+  return (
+    <svg viewBox="0 0 280 180" width="100%" style={{ maxWidth: 430, display: 'block' }} aria-hidden="true">
+      <defs>
+        <radialGradient id="fmGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="rgba(239,107,67,0.28)" />
+          <stop offset="100%" stopColor="rgba(239,107,67,0)" />
+        </radialGradient>
+      </defs>
+      {/* 等時圈：由內而外的等高時間環（裝飾語言 A） */}
+      {[66, 50, 34, 18].map((r, i) => (
+        <circle key={r} cx="140" cy="90" r={r} fill="none" stroke="var(--accent2)" strokeOpacity={0.22 - i * 0.03} strokeWidth="1"
+          style={{ animation: `fmRing 3.2s ${i * 0.35}s ease-in-out infinite` }} />
+      ))}
+      {/* 人 → 目的地的柔和指向（非真實路徑） */}
+      {people.map((p, i) => (
+        <line key={'l'+i} x1={p.x} y1={p.y} x2="140" y2="90" stroke={p.c} strokeOpacity="0.28" strokeWidth="1.2" strokeDasharray="2.5 4" strokeLinecap="round" />
+      ))}
+      {people.map((p, i) => (
+        <g key={'o'+i}>
+          <circle cx={p.x} cy={p.y} r="7" fill={p.c} fillOpacity="0.14" />
+          <circle cx={p.x} cy={p.y} r="3.4" fill={p.c} />
+        </g>
+      ))}
+      {/* 最公平的目的地 */}
+      <circle cx="140" cy="90" r="30" fill="url(#fmGlow)" />
+      <g transform="translate(128.5, 77) scale(0.82)" fill="rgba(239,107,67,0.16)" stroke="#ef6b43" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
+        <path d="M12 21s7-5.686 7-11a7 7 0 1 0-14 0c0 5.314 7 11 7 11Z" />
+        <circle cx="12" cy="10" r="2.4" fill="#ef6b43" stroke="none" />
+      </g>
+    </svg>
   );
 }
 
@@ -515,16 +584,41 @@ function DesktopEmptyState({ persons, candidates, loading }) {
       </div>
     );
   }
-  const step = persons.length < 2
-    ? { icon: '👥', title: '加入參與者', sub: '在左側輸入每位參與者的出發地址' }
-    : candidates.length === 0
-      ? { icon: '📍', title: '新增候選集合點', sub: '搜尋你們可能想聚會的地點' }
-      : { icon: '✦', title: '準備就緒', sub: '點擊「計算最公平集合點」' };
+  const stepIdx = persons.length < 2 ? 0 : candidates.length === 0 ? 1 : 2;
+  const copy = [
+    { title: '找出對大家都公平的相聚地', sub: '加入每個人的出發地，算出車程最平均的目的地——只到行政區，不洩漏任何人的位置' },
+    { title: '選幾個候選相聚地', sub: '搜尋你們可能想去的地點來比較哪裡最公平' },
+    { title: '準備就緒', sub: '點左側「找出最公平的相聚地」看排名' },
+  ][stepIdx];
+  const steps = [
+    { icon: 'users', label: '加入參與者' },
+    { icon: 'map', label: '選集合點' },
+    { icon: 'spark', label: '計算' },
+  ];
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, paddingTop: 40 }}>
-      <div style={{ fontSize: 52, opacity: 0.4 }}>{step.icon}</div>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, opacity: 0.5 }}>{step.title}</div>
-      <div style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', maxWidth: 280 }}>{step.sub}</div>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, padding: '20px 24px' }}>
+      <ConvergenceHero />
+      <div style={{ textAlign: 'center', maxWidth: 360 }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>{copy.title}</div>
+        <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7 }}>{copy.sub}</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        {steps.map((s, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 999,
+              border: `1px solid ${i === stepIdx ? 'rgba(239,107,67,0.5)' : i < stepIdx ? 'rgba(239,107,67,0.25)' : 'var(--border)'}`,
+              background: i === stepIdx ? 'rgba(239,107,67,0.08)' : 'transparent',
+              color: i === stepIdx ? 'var(--accent)' : i < stepIdx ? 'var(--text2)' : 'var(--muted)',
+              transition: 'all 0.2s ease',
+            }}>
+              <Icon name={i < stepIdx ? 'check' : s.icon} size={15} />
+              <span style={{ fontSize: 12, fontWeight: i === stepIdx ? 600 : 400, fontFamily: 'var(--font-display)', whiteSpace: 'nowrap' }}>{s.label}</span>
+            </div>
+            {i < steps.length - 1 && <div style={{ width: 16, height: 1, background: i < stepIdx ? 'rgba(239,107,67,0.4)' : 'var(--border)' }} />}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -540,7 +634,7 @@ function SectionLabel({ children }) {
 function EmptyHint({ icon, text }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--muted)', padding: '10px 4px' }}>
-      <span>{icon}</span>{text}
+      <Icon name={icon} size={15} stroke={1.6} style={{ flexShrink: 0, opacity: 0.8 }} />{text}
     </div>
   );
 }
@@ -551,11 +645,11 @@ function Divider() {
 
 const primaryBtn = {
   width: '100%', padding: '13px 20px',
-  background: 'linear-gradient(135deg, #3ef0a0 0%, #1ad97a 100%)',
-  color: '#030f07', border: 'none', borderRadius: 10,
+  background: 'linear-gradient(135deg, #ef6b43 0%, #d9531f 100%)',
+  color: '#fff', border: 'none', borderRadius: 10,
   fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  boxShadow: '0 4px 16px rgba(62,240,160,0.25)', transition: 'all 0.15s ease', letterSpacing: 0.3, cursor: 'pointer',
+  boxShadow: '0 4px 16px rgba(239,107,67,0.25)', transition: 'all 0.15s ease', letterSpacing: 0.3, cursor: 'pointer',
 };
 const disabledBtn = {
   width: '100%', padding: '13px 20px',
@@ -566,7 +660,7 @@ const disabledBtn = {
 };
 const outlineBtn = {
   padding: '12px 20px', background: 'transparent', color: 'var(--accent)',
-  border: '1.5px solid rgba(62,240,160,0.35)', borderRadius: 10,
+  border: '1.5px solid rgba(239,107,67,0.35)', borderRadius: 10,
   fontFamily: 'var(--font-body)', fontSize: 13, cursor: 'pointer',
   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
   transition: 'all 0.15s ease',
