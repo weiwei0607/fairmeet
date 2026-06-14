@@ -1,123 +1,113 @@
 // ─────────────────────────────────────────────
-//  components/ResultCard.jsx v2 — 視覺升級
+//  components/ResultCard.jsx — 「等時圈 × 相聚」結果卡
+//  最公平的相聚地（行政區層級）＋ 公平度 ＋ 可收合個人時間
 // ─────────────────────────────────────────────
+import { useState } from 'react';
 import { toFairnessPercent } from '../utils/fairness';
 
-const RANK_COLORS = ['#3ef0a0', '#38bdf8', '#a78bfa', '#f472b6', '#fb923c'];
+const RANK_COLORS = ['#ef6b43', '#e0922a', '#3a9e94', '#8b7bd6', '#c2693f'];
 
 export default function ResultCard({ result, rank, maxFairScore, isTop }) {
+  const [showTimes, setShowTimes] = useState(false);
   const percent = toFairnessPercent(result.fairScore, maxFairScore);
   const rankColor = RANK_COLORS[(rank - 1) % RANK_COLORS.length];
+  const area = result.candidate.district || result.candidate.name;
 
-  return (
-    <div
-      className="animate-fade-in"
-      style={{
-        background: isTop ? 'rgba(62,240,160,0.04)' : 'var(--surface)',
-        border: `1px solid ${isTop ? 'rgba(62,240,160,0.28)' : 'var(--border)'}`,
-        borderRadius: 'var(--radius-md)',
-        padding: '18px 20px',
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
-        boxShadow: isTop ? '0 0 24px rgba(62,240,160,0.08)' : 'none',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.borderColor = isTop ? 'rgba(62,240,160,0.45)' : 'var(--border2)';
-        if (isTop) e.currentTarget.style.boxShadow = '0 0 32px rgba(62,240,160,0.14)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = isTop ? 'rgba(62,240,160,0.28)' : 'var(--border)';
-        e.currentTarget.style.boxShadow = isTop ? '0 0 24px rgba(62,240,160,0.08)' : 'none';
-      }}
-    >
-      {/* Top accent line */}
-      {isTop && (
+  // ── 冠軍卡：行政區當主角 ──
+  if (isTop) {
+    return (
+      <div className="animate-fade-in" style={{
+        position: 'relative', overflow: 'hidden',
+        background: 'var(--surface)',
+        border: '1px solid var(--accent)', borderRadius: 'var(--radius-lg)',
+        padding: '4px', boxShadow: '0 10px 30px rgba(239,107,67,0.12)',
+      }}>
         <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 2,
-          background: 'linear-gradient(90deg, #3ef0a0, #1ad97a, transparent)',
-        }} />
-      )}
+          borderRadius: 13, padding: '22px 22px 18px',
+          background: 'radial-gradient(120% 90% at 50% 0%, rgba(239,107,67,0.10), rgba(252,246,238,0) 60%)',
+        }}>
+          {/* 等時圈裝飾母題（純裝飾） */}
+          <svg viewBox="0 0 200 80" width="100%" style={{ position: 'absolute', top: 0, left: 0, opacity: 0.5, pointerEvents: 'none' }} aria-hidden="true">
+            {[58, 42, 26].map(r => <circle key={r} cx="100" cy="6" r={r} fill="none" stroke="var(--accent2)" strokeOpacity="0.18" strokeWidth="1" />)}
+          </svg>
 
-      {/* Best badge */}
-      {isTop && (
-        <div style={{
-          position: 'absolute', top: 0, right: 0,
-          background: 'linear-gradient(135deg, #3ef0a0, #1ad97a)',
-          color: '#030f07', fontSize: 10, fontFamily: 'var(--font-display)',
-          fontWeight: 800, padding: '5px 14px',
-          borderBottomLeftRadius: 10, letterSpacing: 0.8,
-        }}>最公平 ✓</div>
-      )}
-
-      {/* Rank + Name + Score */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-          background: `${rankColor}18`, border: `1.5px solid ${rankColor}50`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 11, fontWeight: 800, color: rankColor, fontFamily: 'var(--font-display)',
-        }}>{rank}</div>
-
-        <span style={{ flex: 1, fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text)', lineHeight: 1.3 }}>
-          {result.candidate.name}
-        </span>
-
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-          <span style={{ fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-display)', color: rankColor, lineHeight: 1 }}>{percent}</span>
-          <span style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--font-display)' }}>分</span>
-        </div>
-      </div>
-
-      {/* Progress bar */}
-      <div style={{ height: 4, background: 'var(--surface2)', borderRadius: 4, marginBottom: 16, overflow: 'hidden' }}>
-        <div style={{
-          height: '100%', width: `${percent}%`, borderRadius: 4,
-          background: isTop ? 'linear-gradient(90deg, #3ef0a0, #1ad97a)' : `linear-gradient(90deg, ${rankColor}80, ${rankColor})`,
-          animation: 'barGrow 0.7s ease both',
-          boxShadow: isTop ? '0 0 8px rgba(62,240,160,0.4)' : 'none',
-        }} />
-      </div>
-
-      {/* Stats */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 14, background: 'var(--surface2)', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
-        {[
-          { label: '平均', value: result.avg, warn: false },
-          { label: '最長', value: result.maxMinutes, warn: false },
-          { label: '差距', value: result.spread, warn: result.spread > 20 },
-        ].map((s, idx) => (
-          <div key={s.label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', borderRight: idx < 2 ? '1px solid var(--border)' : 'none' }}>
-            <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4, letterSpacing: 0.5, fontFamily: 'var(--font-display)', textTransform: 'uppercase' }}>{s.label}</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 2 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-display)', color: s.warn ? 'var(--warn)' : 'var(--text)' }}>{s.value}</span>
-              <span style={{ fontSize: 10, color: 'var(--muted)' }}>分鐘</span>
+          <div style={{ position: 'relative', textAlign: 'center' }}>
+            <div style={{ fontSize: 10, letterSpacing: 4, color: 'var(--muted)', fontFamily: 'var(--font-display)', fontWeight: 600, marginBottom: 8 }}>最 公 平 的 相 聚 地</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 34, color: 'var(--text)', lineHeight: 1.1 }}>{area}</div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12, padding: '5px 14px', borderRadius: 999, background: 'var(--accent)', color: '#fff' }}>
+              <span style={{ fontSize: 12, fontFamily: 'var(--font-display)', fontWeight: 700 }}>公平度 {percent}%</span>
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 12 }}>
+              對 {result.times.length} 人最公平 · 平均車程 {result.avg} 分鐘 · 差距 {result.spread} 分
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Per-person times */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {result.times.map(t => {
-          const isLong = t.minutes > 40;
-          return (
-            <div key={t.name} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: 'var(--surface2)', border: `1px solid ${isLong ? 'rgba(251,146,60,0.3)' : 'var(--border)'}`,
-              borderRadius: 8, padding: '5px 10px',
-            }}>
-              <span style={{ fontSize: 12, color: 'var(--text2)' }}>{t.name}</span>
-              <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-display)', color: isLong ? 'var(--warn)' : 'var(--accent)' }}>
-                {t.minutes}<span style={{ fontSize: 10, fontWeight: 400, color: 'var(--muted)', marginLeft: 1 }}>分</span>
-              </span>
+          {/* 可收合的個人時間（隱私：預設收起） */}
+          <button onClick={() => setShowTimes(v => !v)} style={{
+            margin: '16px auto 0', display: 'flex', alignItems: 'center', gap: 6,
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--muted)', fontSize: 12, fontFamily: 'var(--font-body)',
+          }}>
+            {showTimes ? '隱藏' : '顯示'}個人車程
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: showTimes ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6" /></svg>
+          </button>
+
+          {showTimes && (
+            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+              {result.times.map(t => {
+                const w = Math.min(100, (t.minutes / Math.max(result.maxMinutes, 1)) * 100);
+                return (
+                  <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text2)', width: 48, flexShrink: 0, fontFamily: 'var(--font-display)' }}>{t.name}</span>
+                    <div style={{ flex: 1, height: 6, background: 'var(--surface2)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${w}%`, background: 'var(--accent)', borderRadius: 3, animation: 'barGrow 0.6s ease both' }} />
+                    </div>
+                    <span style={{ fontSize: 12, color: 'var(--text2)', width: 40, textAlign: 'right', fontFamily: 'var(--font-display)' }}>{t.minutes} 分</span>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
+          )}
 
-      {result.debtAdjusted && (
-        <div style={{ marginTop: 10, fontSize: 11, color: 'var(--accent)', opacity: 0.7 }}>⚖ 已套用歷史虧欠補償</div>
-      )}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border)', fontSize: 11, color: 'var(--muted)' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M7 11V8a5 5 0 0 1 10 0v3 M6 11h12a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z" /></svg>
+            只到行政區層級 · 不顯示也無法反推任何人的確切位置
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── 其他名次：精簡比較列 ──
+  return (
+    <div className="animate-fade-in" style={{
+      display: 'flex', alignItems: 'center', gap: 14,
+      background: 'var(--surface)', border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-md)', padding: '14px 16px',
+      transition: 'border-color 0.15s',
+    }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border2)'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+      <div style={{
+        width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+        background: `${rankColor}1e`, border: `1.5px solid ${rankColor}55`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 11, fontWeight: 800, color: rankColor, fontFamily: 'var(--font-display)',
+      }}>{rank}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{area}</div>
+        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>平均 {result.avg} 分 · 差距 {result.spread} 分</div>
+      </div>
+      <div style={{ width: 70, flexShrink: 0 }}>
+        <div style={{ height: 5, background: 'var(--surface2)', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${percent}%`, background: rankColor, borderRadius: 3, animation: 'barGrow 0.7s ease both' }} />
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, width: 44, justifyContent: 'flex-end' }}>
+        <span style={{ fontSize: 17, fontWeight: 800, fontFamily: 'var(--font-display)', color: rankColor, lineHeight: 1 }}>{percent}</span>
+        <span style={{ fontSize: 10, color: 'var(--muted)' }}>%</span>
+      </div>
     </div>
   );
 }

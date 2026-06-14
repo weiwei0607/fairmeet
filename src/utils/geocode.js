@@ -17,6 +17,7 @@ async function nominatimSearch(query) {
   return data.map(item => ({
     label: item.display_name,
     shortLabel: formatShortLabel(item),
+    district: formatDistrict(item),
     lat: parseFloat(item.lat),
     lng: parseFloat(item.lon),
     city: detectCity(item),
@@ -32,6 +33,15 @@ function formatShortLabel(item) {
     a.country_code?.toUpperCase(),
   ].filter(Boolean);
   return parts.slice(0, 3).join('・');
+}
+
+// 行政區層級標籤（隱私：只到區/市，不洩漏確切點）
+function formatDistrict(item) {
+  const a = item.address || {};
+  const dist = a.suburb || a.city_district || a.neighbourhood || a.town || a.village;
+  const city = a.city || a.county || a.state;
+  if (dist && city) return `${city}${dist}`.replace(/\s/g, '');
+  return dist || city || null;
 }
 
 function detectCity(item) {
