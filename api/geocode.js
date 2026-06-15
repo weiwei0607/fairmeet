@@ -36,8 +36,10 @@ export default async function handler(req, res) {
     const gmRes = await fetch(url);
     const data = await gmRes.json();
 
-    if (data.status !== 'OK') {
-      return res.status(200).json({ results: [] }); // 沒結果回空陣列，不報錯
+    if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+      // Google 沒給有效結果（API 未啟用 / 未開帳單 / 金鑰問題 / 查無）
+      // → 回非 2xx，讓前端 fallback 到免費的 Nominatim（OpenStreetMap），不再卡死
+      return res.status(502).json({ error: `geocode upstream: ${data.status}` });
     }
 
     const results = data.results.map(item => ({
