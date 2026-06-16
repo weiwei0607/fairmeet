@@ -7,12 +7,21 @@
 // ── Nominatim 備用（OpenStreetMap，免費不需 API key）──
 async function nominatimSearch(query) {
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`;
-  const res = await fetch(url, {
-    headers: {
-      'Accept-Language': 'zh-TW,zh,en',
-      'User-Agent': 'FairMeet/1.0 (https://fairmeet.app)',
-    },
-  });
+  // 加 8 秒 timeout：OSM 公共服務有時很慢，沒有上限會讓搜尋無限卡住（freeze）
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: {
+        'Accept-Language': 'zh-TW,zh,en',
+        'User-Agent': 'FairMeet/1.0 (https://fairmeet.app)',
+      },
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
   const data = await res.json();
   return data.map(item => ({
     label: item.display_name,
@@ -70,7 +79,12 @@ export async function searchAddress(query) {
   try {
     return await proxySearch(query);
   } catch {
-    // 後端失敗時 fallback 到 Nominatim
-    return await nominatimSearch(query);
+    // 後端失敗時 fallback 到 Nominatim；Nominatim 也失敗（超時/網路）就回空陣列，
+    // 確保搜尋永遠不會把例外往外丟而讓 UI 卡住或崩潰。
+    try {
+      return await nominatimSearch(query);
+    } catch {
+      return [];
+    }
   }
 }
