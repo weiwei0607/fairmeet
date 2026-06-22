@@ -50,26 +50,6 @@ export default function ResultCard({ result, rank, maxFairScore, isTop }) {
           )}
 
           <div style={{ position: 'relative', textAlign: 'center' }}>
-            {result.redFlag && (
-              <div style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                marginBottom: '16px',
-                color: '#ef4444',
-                fontSize: '13px',
-                fontWeight: '600',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                width: '100%',
-                boxSizing: 'border-box'
-              }}>
-                🚩 注意：此地點對部分參與者極不公平（交通差距大）
-              </div>
-            )}
             <div style={{ fontSize: 10, letterSpacing: 4, color: 'var(--muted)', fontFamily: 'var(--font-display)', fontWeight: 600, marginBottom: 8 }}>最 公 平 的 相 聚 地</div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 34, color: 'var(--text)', lineHeight: 1.1 }}>{area}</div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12, padding: '5px 14px', borderRadius: 999, background: 'var(--accent)', color: '#fff' }}>

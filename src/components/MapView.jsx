@@ -30,6 +30,7 @@ function makeIcon(color) {
 
 export default function MapView({ candidates, rankedResults, center }) {
   const topCandidate = rankedResults[0]?.candidate;
+  const isTopRedFlagged = rankedResults[0]?.redFlag;
 
   return (
     <div className="fairmeet-map" style={{ height: 320, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)' }}>
@@ -80,8 +81,8 @@ export default function MapView({ candidates, rankedResults, center }) {
             center={[topCandidate.lat, topCandidate.lng]}
             radius={800}
             pathOptions={{
-              color: rankedResults[0]?.redFlag ? '#ef4444' : '#3ef0a0',
-              fillColor: rankedResults[0]?.redFlag ? '#ef4444' : '#3ef0a0',
+              color: isTopRedFlagged ? '#ef4444' : '#3ef0a0',
+              fillColor: isTopRedFlagged ? '#ef4444' : '#3ef0a0',
               fillOpacity: 0.05,
               weight: 1
             }}
