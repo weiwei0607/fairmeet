@@ -31,7 +31,45 @@ export default function ResultCard({ result, rank, maxFairScore, isTop }) {
             {[58, 42, 26].map(r => <circle key={r} cx="100" cy="6" r={r} fill="none" stroke="var(--accent2)" strokeOpacity="0.18" strokeWidth="1" />)}
           </svg>
 
+          {result.redFlag && (
+            <div style={{
+              background: '#fef2f2',
+              border: '1px solid #ef4444',
+              color: '#ef4444',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              marginBottom: '16px',
+              position: 'relative',
+              zIndex: 1,
+            }}>
+              🚩 注意：此地點對部分參與者極不公平（交通差距大）
+            </div>
+          )}
+
           <div style={{ position: 'relative', textAlign: 'center' }}>
+            {result.redFlag && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                marginBottom: '16px',
+                color: '#ef4444',
+                fontSize: '13px',
+                fontWeight: '600',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}>
+                🚩 注意：此地點對部分參與者極不公平（交通差距大）
+              </div>
+            )}
             <div style={{ fontSize: 10, letterSpacing: 4, color: 'var(--muted)', fontFamily: 'var(--font-display)', fontWeight: 600, marginBottom: 8 }}>最 公 平 的 相 聚 地</div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 34, color: 'var(--text)', lineHeight: 1.1 }}>{area}</div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12, padding: '5px 14px', borderRadius: 999, background: 'var(--accent)', color: '#fff' }}>
@@ -96,7 +134,10 @@ export default function ResultCard({ result, rank, maxFairScore, isTop }) {
         fontSize: 11, fontWeight: 800, color: rankColor, fontFamily: 'var(--font-display)',
       }}>{rank}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{area}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {area}
+          {result.redFlag && <span title="不公平警告 (差距過大)" style={{ marginLeft: 6, cursor: 'help' }}>🚩</span>}
+        </div>
         <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>平均 {result.avg} 分 · 差距 {result.spread} 分</div>
       </div>
       <div style={{ width: 70, flexShrink: 0 }}>

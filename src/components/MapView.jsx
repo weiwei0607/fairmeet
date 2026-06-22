@@ -49,7 +49,7 @@ export default function MapView({ candidates, rankedResults, center }) {
         {/* 只畫候選集合點，不畫任何人的起點 */}
         {rankedResults.map((r, i) => {
           const isTop = i === 0;
-          const color = isTop ? '#3ef0a0' : '#38bdf8';
+          const color = r.redFlag ? '#ef4444' : (isTop ? '#3ef0a0' : '#38bdf8');
           return (
             <Marker
               key={r.candidate.name}
@@ -58,6 +58,11 @@ export default function MapView({ candidates, rankedResults, center }) {
             >
               <Popup>
                 <div style={{ fontFamily: 'sans-serif', fontSize: 13, minWidth: 140 }}>
+                  {r.redFlag && (
+                    <div style={{ fontWeight: 'bold', color: '#ef4444', marginBottom: 6 }}>
+                      🚩 不公平警告 (差距過大)
+                    </div>
+                  )}
                   <div style={{ fontWeight: 700, marginBottom: 4 }}>
                     {isTop ? '✓ ' : ''}{r.candidate.name}
                   </div>
@@ -74,7 +79,12 @@ export default function MapView({ candidates, rankedResults, center }) {
           <Circle
             center={[topCandidate.lat, topCandidate.lng]}
             radius={800}
-            pathOptions={{ color: '#3ef0a0', fillColor: '#3ef0a0', fillOpacity: 0.05, weight: 1 }}
+            pathOptions={{
+              color: rankedResults[0]?.redFlag ? '#ef4444' : '#3ef0a0',
+              fillColor: rankedResults[0]?.redFlag ? '#ef4444' : '#3ef0a0',
+              fillOpacity: 0.05,
+              weight: 1
+            }}
           />
         )}
       </MapContainer>

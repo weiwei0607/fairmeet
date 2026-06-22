@@ -13,3 +13,8 @@ export const MAX_CANDIDATES = 5;
 // fairness_score = WEIGHT_TOTAL * 總時間分數 + WEIGHT_MINMAX * 差距分數
 export const WEIGHT_TOTAL = 0.5;
 export const WEIGHT_MINMAX = 0.5;
+
+// 不公平閾值設定
+export const UNFAIRNESS_THRESHOLD_STDDEV = 15;
+export const UNFAIRNESS_THRESHOLD_SPREAD = 30;
+

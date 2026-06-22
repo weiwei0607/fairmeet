@@ -2,7 +2,7 @@
 //  utils/fairness.js
 //  公平分數計算核心邏輯
 // ─────────────────────────────────────────────
-import { WEIGHT_TOTAL, WEIGHT_MINMAX } from '../config';
+import { WEIGHT_TOTAL, WEIGHT_MINMAX, UNFAIRNESS_THRESHOLD_STDDEV, UNFAIRNESS_THRESHOLD_SPREAD } from '../config';
 
 // matrix[i][j] = person i 到 candidate j 的分鐘數
 // 回傳每個候選點的分析結果，依公平分數排序（低=好）
@@ -22,7 +22,7 @@ export function rankCandidates(candidates, persons, matrix) {
     const variance = times.reduce((s, t) => s + Math.pow(t.minutes - avg, 2), 0) / times.length;
     const unfairnessScore = Math.sqrt(variance);
 
-    const redFlag = unfairnessScore > 15 || spread > 30;
+    const redFlag = unfairnessScore > UNFAIRNESS_THRESHOLD_STDDEV || spread > UNFAIRNESS_THRESHOLD_SPREAD;
     const fairScore = WEIGHT_TOTAL * avg + WEIGHT_MINMAX * unfairnessScore;
 
     return {
