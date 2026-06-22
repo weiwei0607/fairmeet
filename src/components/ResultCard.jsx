@@ -9,7 +9,7 @@ const RANK_COLORS = ['#ef6b43', '#e0922a', '#3a9e94', '#8b7bd6', '#c2693f'];
 
 export default function ResultCard({ result, rank, maxFairScore, isTop }) {
   const [showTimes, setShowTimes] = useState(false);
-  const percent = toFairnessPercent(result.fairScore, maxFairScore);
+  const percent = toFairnessPercent(result.unfairnessScore, maxFairScore);
   const rankColor = RANK_COLORS[(rank - 1) % RANK_COLORS.length];
   const area = result.candidate.district || result.candidate.name;
 

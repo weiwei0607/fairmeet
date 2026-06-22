@@ -19,6 +19,12 @@ export function rankCandidates(candidates, persons, matrix) {
     const minT = Math.min(...times.map(t => t.minutes));
     const spread = maxT - minT; // 最大差距，越小越公平
 
+    const variance = times.reduce((s, t) => s + Math.pow(t.minutes - avg, 2), 0) / times.length;
+    const unfairnessScore = Math.sqrt(variance);
+
+    const redFlag = unfairnessScore > 15 || spread > 30;
+    const fairScore = WEIGHT_TOTAL * avg + WEIGHT_MINMAX * unfairnessScore;
+
     return {
       candidate,
       times,
@@ -27,25 +33,16 @@ export function rankCandidates(candidates, persons, matrix) {
       spread,
       maxMinutes: maxT,
       minMinutes: minT,
+      unfairnessScore,
+      redFlag,
+      fairScore,
     };
   });
 
-  // 正規化後計算公平分數（0=最公平）
-  const maxTotal = Math.max(...results.map(r => r.total));
-  const maxSpread = Math.max(...results.map(r => r.spread)) || 1;
-
-  return results
-    .map(r => ({
-      ...r,
-      fairScore:
-        WEIGHT_TOTAL * (r.total / maxTotal) +
-        WEIGHT_MINMAX * (r.spread / maxSpread),
-    }))
-    .sort((a, b) => a.fairScore - b.fairScore);
+  return results.sort((a, b) => a.fairScore - b.fairScore);
 }
 
 // 把分數轉成 0–100 的可讀百分比（100=最公平）
-export function toFairnessPercent(fairScore, maxFairScore) {
-  if (maxFairScore === 0) return 100;
-  return Math.round((1 - fairScore / maxFairScore) * 100);
+export function toFairnessPercent(unfairnessScore, maxFairScore) {
+  return Math.max(0, Math.round((1 - unfairnessScore / 25) * 100));
 }
