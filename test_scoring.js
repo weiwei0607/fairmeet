@@ -186,6 +186,12 @@ async function main() {
     // Red Flag Condition
     const redFlag = unfairnessScore > 15 || spread > 30;
 
+    // Core Scoring calculation matching src/utils/fairness.js
+    const WEIGHT_TOTAL = 0.5;
+    const WEIGHT_MINMAX = 0.5;
+    const fairScore = WEIGHT_TOTAL * avg + WEIGHT_MINMAX * unfairnessScore;
+    const fairnessPercent = Math.max(0, Math.round((1 - unfairnessScore / 25) * 100));
+
     // Print results
     console.log(`\nDestination: ${dest.name}`);
     console.log(`- Individual Travel Times: ${times.map(t => `${t.name}: ${t.minutes}m`).join(', ')}`);
@@ -195,6 +201,8 @@ async function main() {
     console.log(`- Max Time: ${maxT} minutes`);
     console.log(`- Spread (Max - Min): ${spread} minutes`);
     console.log(`- Unfairness Score (Std Dev): ${unfairnessScore.toFixed(4)}`);
+    console.log(`- Fair Score: ${fairScore.toFixed(4)}`);
+    console.log(`- Fairness Percent: ${fairnessPercent}%`);
     console.log(`- Red Flag Triggered: ${redFlag ? 'YES ⚠️' : 'NO'}`);
   });
   
