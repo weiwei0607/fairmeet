@@ -34,25 +34,36 @@ function mockTravelMinutes(origin, dest, mode = 'transit') {
 // persons: [{ name, lat, lng }]
 // candidates: [{ name, lat, lng }]
 // mode: 'transit' | 'driving' | 'walking'
-// 回傳: matrix[personIndex][candidateIndex] = 分鐘數
-export async function getTravelMatrix(persons, candidates, mode = 'transit') {
+// options.offline: true → 完全不打 API，直接用 Haversine 估算（示範模式用，
+//   保證一定成功且不燒 Google 配額）
+// 回傳: { matrix, estimated } — matrix[personIndex][candidateIndex] = 分鐘數，
+//   estimated=true 代表這是模擬估算值，不是 Google 真實交通時間
+export async function getTravelMatrix(persons, candidates, mode = 'transit', options = {}) {
+  if (options.offline) {
+    return {
+      matrix: persons.map(p => candidates.map(c => mockTravelMinutes(p, c, mode))),
+      estimated: true,
+    };
+  }
   try {
     const res = await fetch('/api/distance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ persons, candidates, mode }),
+      signal: AbortSignal.timeout(12000), // 沒有逾時的話，proxy 卡住會讓「計算中」永遠轉圈
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `HTTP ${res.status}`);
     }
     const data = await res.json();
-    return data.matrix;
+    return { matrix: data.matrix, estimated: false };
   } catch (e) {
-    // 後端失敗時 fallback 到模擬模式
+    // 後端失敗時 fallback 到模擬模式，前端會標示「估算值」而不是假裝是真實資料
     console.warn('Distance proxy failed, falling back to mock:', e.message);
-    return Promise.resolve(
-      persons.map(p => candidates.map(c => mockTravelMinutes(p, c, mode)))
-    );
+    return {
+      matrix: persons.map(p => candidates.map(c => mockTravelMinutes(p, c, mode))),
+      estimated: true,
+    };
   }
 }

@@ -67,7 +67,9 @@ function detectCity(item) {
 
 // ── 後端 Proxy（優先）─────────────────────────
 async function proxySearch(query) {
-  const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+  const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, {
+    signal: AbortSignal.timeout(8000), // 沒有逾時的話，proxy 卡住會讓搜尋無限轉圈
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   return data.results || [];

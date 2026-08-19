@@ -49,8 +49,15 @@ export function loadGroups() {
 }
 
 // ── 儲存所有群組 ──────────────────────────────
+// 無痕模式 / 儲存空間已滿時 localStorage.setItem 會拋出例外。
+// 這裡吞掉錯誤而不是讓呼叫端崩潰，並回傳成功與否讓 UI 可以提示使用者。
 function saveGroups(groups) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ── 建立新群組 ────────────────────────────────
@@ -65,8 +72,8 @@ export function createGroup(groupName, members) {
     history: [],
     createdAt: new Date().toISOString(),
   };
-  saveGroups(groups);
-  return id;
+  const ok = saveGroups(groups);
+  return ok ? id : null;
 }
 
 // ── 記錄一次聚會結果 ─────────────────────────

@@ -62,6 +62,7 @@ export default function App() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [estimated, setEstimated] = useState(false);
 
   const [groups, setGroups] = useState({});
   const [activeGroupId, setActiveGroupId] = useState(null);
@@ -86,20 +87,26 @@ export default function App() {
   function handleCreateGroup() {
     if (!newGroupName.trim() || persons.length < 2) return;
     const id = createGroup(newGroupName.trim(), persons);
+    if (!id) {
+      // 無痕模式 / 儲存空間已滿：localStorage 寫入失敗
+      alert('無法儲存群組。無痕模式或瀏覽器儲存空間已滿時無法使用「群組」功能，其他功能不受影響。');
+      return;
+    }
     setGroups(loadGroups());
     setActiveGroupId(id);
     setNewGroupName('');
   }
 
-  const calculate = useCallback(async () => {
+  const calculate = useCallback(async (opts = {}) => {
     if (persons.length < 2 || candidates.length === 0) return;
     setLoading(true);
     setError(null);
     try {
-      const matrix = await getTravelMatrix(persons, candidates, mode);
+      const { matrix, estimated: isEstimated } = await getTravelMatrix(persons, candidates, mode, opts);
       let ranked = rankCandidates(candidates, persons, matrix);
       if (useDebt && debtSummary) ranked = applyDebtCompensation(ranked, debtSummary);
       setResults(ranked);
+      setEstimated(isEstimated);
       if (isMobile) setMobileStep(2);
     } catch (e) {
       setError('計算失敗，請檢查網路連線或稍後再試。');
@@ -107,6 +114,45 @@ export default function App() {
       setLoading(false);
     }
   }, [persons, candidates, mode, useDebt, debtSummary, isMobile]);
+
+  // ── 示範模式：不需要準備任何資料就能看到完整流程 ──
+  // 預填台北的固定座標、走離線估算路徑（不打 Google API，保證成功且不燒配額）
+  const loadDemo = useCallback(() => {
+    const demoPersons = [
+      { name: '小明', label: '台北車站', lat: 25.0478, lng: 121.5170, city: 'taipei' },
+      { name: '小華', label: '公館', lat: 25.0148, lng: 121.5342, city: 'taipei' },
+      { name: '阿凱', label: '南港', lat: 25.0546, lng: 121.6066, city: 'taipei' },
+    ];
+    const demoCandidates = [
+      { name: '西門町', district: '台北市萬華區', lat: 25.0421, lng: 121.5079 },
+      { name: '大安森林公園', district: '台北市大安區', lat: 25.0296, lng: 121.5352 },
+      { name: '市政府', district: '台北市信義區', lat: 25.0375, lng: 121.5637 },
+    ];
+    setPersons(demoPersons);
+    setCandidates(demoCandidates);
+    setResults(null);
+    if (isMobile) setMobileStep(1);
+    // 用下一輪 microtask 觸發計算，確保 state 已更新（calculate 依賴 persons/candidates）
+    setTimeout(() => calculateWithData(demoPersons, demoCandidates), 0);
+  }, [isMobile]);
+
+  // calculate() 讀的是 state，剛 setPersons 還沒生效前無法直接呼叫，
+  // 所以示範模式用這個版本直接吃參數。
+  const calculateWithData = useCallback(async (ps, cs) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { matrix, estimated: isEstimated } = await getTravelMatrix(ps, cs, mode, { offline: true });
+      const ranked = rankCandidates(cs, ps, matrix);
+      setResults(ranked);
+      setEstimated(isEstimated);
+      if (isMobile) setMobileStep(2);
+    } catch (e) {
+      setError('計算失敗，請稍後再試。');
+    } finally {
+      setLoading(false);
+    }
+  }, [mode, isMobile]);
 
   function handleRecordMeetup() {
     if (!activeGroupId || !results) return;
@@ -231,6 +277,11 @@ export default function App() {
                   </div>
                   {persons.length === 0 && <EmptyHint icon="users" text="輸入暱稱和出發地址，加入第一位參與者" />}
                   {persons.length === 1 && <EmptyHint icon="plus" text="再加入一位才能計算" />}
+                  {persons.length === 0 && (
+                    <button onClick={loadDemo} style={{ ...outlineBtn, width: '100%', marginTop: 10 }}>
+                      ✦ 不想輸入？看一個範例
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -261,7 +312,7 @@ export default function App() {
               {mobileStep === 2 && results && (
                 <div className="animate-fade-in">
                   <MapView candidates={candidates} rankedResults={results} center={mapCenter} />
-                  <PrivacyNotice hasDebt={results[0]?.debtAdjusted} />
+                  <PrivacyNotice hasDebt={results[0]?.debtAdjusted} estimated={estimated} />
                   <div style={{ marginTop: 16 }}>
                     <SectionLabel>集合點排行</SectionLabel>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -313,6 +364,11 @@ export default function App() {
                   {persons.map((p, i) => <PersonTag key={i} person={p} index={i} onRemove={() => removePerson(i)} />)}
                 </div>
                 {persons.length < 2 && <EmptyHint icon="users" text={persons.length === 0 ? '輸入暱稱和地址加入參與者' : '再加一位就可以計算了'} />}
+                {persons.length === 0 && (
+                  <button onClick={loadDemo} style={{ ...outlineBtn, width: '100%', marginTop: 10 }}>
+                    ✦ 不想輸入？看一個範例
+                  </button>
+                )}
               </section>
 
               <Divider />
@@ -362,7 +418,7 @@ export default function App() {
               {results ? (
                 <div className="animate-fade-in">
                   <MapView candidates={candidates} rankedResults={results} center={mapCenter} />
-                  <PrivacyNotice hasDebt={results[0]?.debtAdjusted} />
+                  <PrivacyNotice hasDebt={results[0]?.debtAdjusted} estimated={estimated} />
                   <div style={{ marginTop: 16 }}>
                     <SectionLabel>集合點排行</SectionLabel>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -523,13 +579,21 @@ function TransportButton({ m, active, onClick }) {
   );
 }
 
-function PrivacyNotice({ hasDebt }) {
+function PrivacyNotice({ hasDebt, estimated }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--muted)', background: 'rgba(239,107,67,0.03)', border: '1px solid rgba(239,107,67,0.1)', borderRadius: 8, padding: '8px 14px', marginTop: 14 }}>
-      <Icon name="lock" size={13} stroke={1.6} style={{ flexShrink: 0 }} />
-      只顯示集合點，不顯示任何人的出發位置
-      {hasDebt && <span style={{ color: 'var(--accent)' }}>· 已套用歷史補償</span>}
-    </div>
+    <>
+      {estimated && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--accent2)', background: 'rgba(224,146,42,0.08)', border: '1px solid rgba(224,146,42,0.25)', borderRadius: 8, padding: '8px 14px', marginTop: 14 }}>
+          <Icon name="target" size={13} stroke={1.6} style={{ flexShrink: 0 }} />
+          估算模式：交通時間是直線距離推算，不是 Google 真實路線
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--muted)', background: 'rgba(239,107,67,0.03)', border: '1px solid rgba(239,107,67,0.1)', borderRadius: 8, padding: '8px 14px', marginTop: 8 }}>
+        <Icon name="lock" size={13} stroke={1.6} style={{ flexShrink: 0 }} />
+        只顯示集合點，不顯示任何人的出發位置
+        {hasDebt && <span style={{ color: 'var(--accent)' }}>· 已套用歷史補償</span>}
+      </div>
+    </>
   );
 }
 

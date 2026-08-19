@@ -31,7 +31,7 @@ API key 只放在後端（Vercel Serverless Function），前端永遠看不到�
 4. 本地開發：複製 `.env.example` 為 `.env`，填入 `GOOGLE_MAPS_API_KEY`
 5. Vercel 部署：到 Dashboard > Settings > Environment Variables 設定 `GOOGLE_MAPS_API_KEY`（可選：`ALLOWED_ORIGIN` 限制跨域來源）
 
-沒有設定 key 時會自動使用模擬模式（Haversine 直線距離估算），右上角會顯示「模擬模式」。
+沒有設定 key、Google API 失敗、或使用「看一個範例」時，會自動使用模擬模式（Haversine 直線距離估算），結果卡片上方會標示「估算模式」。
 
 ## 隱私設計
 
